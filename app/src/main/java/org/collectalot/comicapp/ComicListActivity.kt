@@ -27,7 +27,6 @@ class ComicListActivity : AppCompatActivity() {
     private lateinit var adapter: ComicsRecyclerAdapter
     private lateinit var fab: FloatingActionButton
     private lateinit var titleSearch: EditText
-    private var partitionValue: String = comicApp.currentUser()?.id.toString()
 
 
     override fun onStart() {
@@ -43,32 +42,19 @@ class ComicListActivity : AppCompatActivity() {
         }
         else {
             // configure realm to use the current user and the partition corresponding to "My Project"
-            val config = SyncConfiguration.Builder(user!!, partitionValue)
+            val currentUser = user!!
+            val config = SyncConfiguration.Builder(currentUser, currentUser.id.toString())
                 .waitForInitialRemoteData()
-                .allowQueriesOnUiThread(true)
+//                .allowQueriesOnUiThread(true)
                 .build()
             // save this configuration as the default for this entire app so other activities and threads can open their own realm instances
             Realm.setDefaultConfiguration(config)
 
             // Sync all realm changes via a new instance, and when that instance has been successfully created connect it to an on-screen list (a recycler view)
-            Thread({
-                Realm.getInstance(config).use {
-                    var count = it.where<comic>().count().toString()
-                    RealmLog.error(count)
-                    Log.v("foo", "countx: ${count}")
-                };
-            }).start()
             Realm.getInstanceAsync(config, object: Realm.Callback() {
                 override fun onSuccess(realm: Realm) {
                     // since this realm should live exactly as long as this activity, assign the realm to a member variable
                     mRealm = realm
-                    var count1 = realm.where<comic>().count().toString()
-                    realm.executeTransactionAsync(Realm.Transaction { realm ->
-                        realm.syncSession.downloadAllServerChanges()
-                        var count2 = realm.where<comic>().count().toString()
-                        Log.v("foo", "count2: ${count2}")
-                    })
-                    Log.v("foo", "count1: ${count1}")
                     setUpRecyclerView(realm)
                 }
             })
