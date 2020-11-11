@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">ComicApp</string>
+    <!-- comic view string values -->
+    <string name="comic_view_title_label">Title</string>
+    <string name="comic_view_subtitle_label">Subtitle</string>
+    <string name="comic_view_author_label">Author</string>
+    <string name="comic_view_publisher_label">Publisher</string>
+    <string name="comic_view_year_label">Year</string>
+    <string name="comic_view_edition_label">Edition</string>
+    <string name="comic_view_printing_label">Printing</string>
+    <string name="comic_view_country_label">Country</string>
+    <string name="comic_view_binding_label">Binding</string>
+    <string name="comic_view_isbn_label">ISBN (13)</string>
+    <string name="comic_view_menu_delete">Delete</string>
+    <string name="comic_view_menu_clone">Clone</string>
 </resources>

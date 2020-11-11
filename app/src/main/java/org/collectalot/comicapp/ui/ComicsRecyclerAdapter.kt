@@ -1,5 +1,6 @@
 package org.collectalot.comicapp.ui
 
+import android.util.Log
 import android.view.*
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -8,7 +9,7 @@ import io.realm.OrderedRealmCollection
 import io.realm.RealmRecyclerViewAdapter
 import org.collectalot.comicapp.model.comic
 
-internal class ComicsRecyclerAdapter(data: OrderedRealmCollection<comic>) : RealmRecyclerViewAdapter<comic, ComicsRecyclerAdapter.ItemViewHolder?>(data, true) {
+internal class ComicsRecyclerAdapter(private val cellClickListener: View.OnClickListener, data: OrderedRealmCollection<comic>) : RealmRecyclerViewAdapter<comic, ComicsRecyclerAdapter.ItemViewHolder?>(data, true) {
     internal inner class ItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var name: TextView = view.findViewById(R.id.body)
         var data: comic? = null
@@ -21,5 +22,7 @@ internal class ComicsRecyclerAdapter(data: OrderedRealmCollection<comic>) : Real
         val obj: comic? = getItem(position)
         holder.data = obj
         holder.name.text = listOfNotNull(obj?.title, obj?.subtitle).joinToString(" " )
+        holder.itemView.setOnClickListener(cellClickListener)
+        holder.itemView.tag = obj?._id
     }
 }

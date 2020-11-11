@@ -3,6 +3,7 @@ package org.collectalot.comicapp
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doOnTextChanged
@@ -11,21 +12,21 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.realm.Realm
+import io.realm.RealmResults
 import io.realm.Sort
-import io.realm.kotlin.syncSession
 import io.realm.mongodb.User
 import io.realm.kotlin.where
-import io.realm.log.RealmLog
 import io.realm.mongodb.sync.SyncConfiguration
+import org.bson.types.ObjectId
 import org.collectalot.comicapp.model.comic
 import org.collectalot.comicapp.ui.ComicsRecyclerAdapter
 
-class ComicListActivity : AppCompatActivity() {
+class ComicListActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var mRealm: Realm
     private var user: User? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ComicsRecyclerAdapter
-    private lateinit var fab: FloatingActionButton
+    private lateinit var addComicButton: FloatingActionButton
     private lateinit var titleSearch: EditText
 
 
@@ -41,11 +42,11 @@ class ComicListActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
         }
         else {
-            // configure realm to use the current user and the partition corresponding to "My Project"
+            //TODO: you don't want all of the initialization to be done each time you come back from a comic detail view
             val currentUser = user!!
             val config = SyncConfiguration.Builder(currentUser, currentUser.id.toString())
                 .waitForInitialRemoteData()
-//                .allowQueriesOnUiThread(true)
+                .allowQueriesOnUiThread(true)
                 .build()
             // save this configuration as the default for this entire app so other activities and threads can open their own realm instances
             Realm.setDefaultConfiguration(config)
@@ -63,6 +64,9 @@ class ComicListActivity : AppCompatActivity() {
             //TODO: Does this need to be optimized? One new query each time data is changed.
             adapter.updateData(mRealm.where<comic>().beginsWith("title", titleSearch.text.toString()).sort("title", Sort.ASCENDING, "subtitle", Sort.ASCENDING).findAllAsync())
         }
+        addComicButton.setOnClickListener(View.OnClickListener {
+            startActivity(Intent(this, ComicActivity::class.java))
+        })
     }
 
     override fun onStop() {
@@ -72,6 +76,7 @@ class ComicListActivity : AppCompatActivity() {
                 mRealm.close()
             }
         }
+        recyclerView.adapter = null
     }
     override fun onDestroy() {
         super.onDestroy()
@@ -84,15 +89,24 @@ class ComicListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_comic_list)
         titleSearch = findViewById(R.id.titleSearch)
         recyclerView = findViewById(R.id.task_list)
+        addComicButton = findViewById(R.id.addComic)
+    }
+
+    override fun onClick(v: View?) {
+        intent = Intent(this, ComicActivity::class.java)
+        val comicId: ObjectId = v?.tag as ObjectId
+        intent.putExtra("comicId", comicId)
+        startActivity(intent)
     }
     private fun setUpRecyclerView(realm: Realm) {
         // a recyclerview requires an adapter, which feeds it items to display.
         // Realm provides RealmRecyclerViewAdapter, which you can extend to customize for your application
         // pass the adapter a collection of Tasks from the realm
         // sort this collection so that the displayed order of Tasks remains stable across updates
-        adapter = ComicsRecyclerAdapter(realm.where<comic>().beginsWith("title", titleSearch.text.toString()).sort("title", Sort.ASCENDING, "subtitle", Sort.ASCENDING).findAllAsync())
-        recyclerView.layoutManager = LinearLayoutManager(this)
+        var comics: RealmResults<comic> = realm.where<comic>().beginsWith("title", titleSearch.text.toString()).sort("title", Sort.ASCENDING, "subtitle", Sort.ASCENDING).findAll()
+        adapter = ComicsRecyclerAdapter(this, comics)
         recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.setHasFixedSize(true)
         recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
     }
